@@ -31,7 +31,10 @@
 
 package pl.koziolekweb;
 
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.math.BigInteger;
@@ -40,11 +43,9 @@ import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-public class MyBenchmark {
+import static pl.koziolekweb.Params.*;
 
-    public static final int MAX = 100_000;
-    public static final int TIME = 100;
-    public static final int LOOP = 5;
+public class BigIntBenchmark {
 
     @Benchmark
     @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
@@ -59,72 +60,46 @@ public class MyBenchmark {
         blackhole.consume(sum);
     }
 
-    @State(Scope.Thread)
-    public static class MyState{
-        int a =1;
-        int b =1;
-    }
-
     @Benchmark
     @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Fork(LOOP)
-    public int sum(MyState myState){
-        int sum = myState.a + myState.b;
-        return sum;
-    }
-    @Benchmark
-    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
-    @Fork(LOOP)
-    public int sumWS(MyState myState){
-        int a =1;
-        int b =1;
-        int sum = a + b;
-        return sum;
-    }
-
-    @Benchmark
-    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
-    @Fork(LOOP)
-    public BigInteger streamWithSum() {
-        return IntStream.range(0, MAX)
+    public void streamWithSum(Blackhole blackhole) {
+        blackhole.consume(IntStream.range(0, MAX)
                 .mapToObj(i -> new BigInteger(i + ""))
-                .reduce(new BigInteger("0"), BigInteger::add);
+                .reduce(new BigInteger("0"), BigInteger::add));
     }
 
     @Benchmark
     @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Fork(LOOP)
-    public BigInteger pStreamWithSum() {
-        return IntStream.range(0, MAX).parallel()
+    public void pStreamWithSum(Blackhole blackhole) {
+        blackhole.consume(IntStream.range(0, MAX).parallel()
                 .mapToObj(i -> new BigInteger(i + ""))
-                .reduce(new BigInteger("0"), BigInteger::add);
+                .reduce(new BigInteger("0"), BigInteger::add));
     }
 
     @Benchmark
     @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Fork(LOOP)
-    public BigInteger fjWithSum() {
+    public void fjWithSum(Blackhole blackhole) {
         ForkJoinPool pool = new ForkJoinPool();
-
-        return pool.invoke(new FJT(0, MAX));
+        blackhole.consume(pool.invoke(new BigIntFJT(0, MAX)));
     }
 
 }
 
 
-class FJT extends RecursiveTask<BigInteger> {
+class BigIntFJT extends RecursiveTask<BigInteger> {
 
     private final int start;
     private final int end;
     private final int MAX = 1_000;
 
 
-    public FJT(int start, int end) {
+    public BigIntFJT(int start, int end) {
         this.start = start;
         this.end = end;
     }
@@ -140,8 +115,8 @@ class FJT extends RecursiveTask<BigInteger> {
 
             return sum;
         }
-        FJT fjt1 = new FJT(start, start + ((end - start) / 2));
-        FJT fjt2 = new FJT(start + ((end - start) / 2), end);
+        BigIntFJT fjt1 = new BigIntFJT(start, start + ((end - start) / 2));
+        BigIntFJT fjt2 = new BigIntFJT(start + ((end - start) / 2), end);
 
         fjt1.fork();
         fjt2.fork();
