@@ -31,9 +31,8 @@
 
 package pl.koziolekweb;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 
 import java.math.BigInteger;
 import java.util.concurrent.ForkJoinPool;
@@ -43,25 +42,52 @@ import java.util.stream.IntStream;
 
 public class MyBenchmark {
 
-    public static final int MAX = 1000_000;
+    public static final int MAX = 100_000;
+    public static final int TIME = 100;
+    public static final int LOOP = 5;
 
     @Benchmark
-    @Warmup(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-    public BigInteger loopWithSum() {
+    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Fork(LOOP)
+    public void loopWithSum(Blackhole blackhole) {
         BigInteger sum = new BigInteger("0");
 
         for (int i = 0; i < MAX; i++) {
             sum = sum.add(new BigInteger(i + ""));
         }
+        blackhole.consume(sum);
+    }
 
-        return sum;
-
+    @State(Scope.Thread)
+    public static class MyState{
+        int a =1;
+        int b =1;
     }
 
     @Benchmark
-    @Warmup(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Fork(LOOP)
+    public int sum(MyState myState){
+        int sum = myState.a + myState.b;
+        return sum;
+    }
+    @Benchmark
+    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Fork(LOOP)
+    public int sumWS(MyState myState){
+        int a =1;
+        int b =1;
+        int sum = a + b;
+        return sum;
+    }
+
+    @Benchmark
+    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Fork(LOOP)
     public BigInteger streamWithSum() {
         return IntStream.range(0, MAX)
                 .mapToObj(i -> new BigInteger(i + ""))
@@ -69,8 +95,9 @@ public class MyBenchmark {
     }
 
     @Benchmark
-    @Warmup(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Fork(LOOP)
     public BigInteger pStreamWithSum() {
         return IntStream.range(0, MAX).parallel()
                 .mapToObj(i -> new BigInteger(i + ""))
@@ -78,8 +105,9 @@ public class MyBenchmark {
     }
 
     @Benchmark
-    @Warmup(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Fork(LOOP)
     public BigInteger fjWithSum() {
         ForkJoinPool pool = new ForkJoinPool();
 
@@ -93,7 +121,7 @@ class FJT extends RecursiveTask<BigInteger> {
 
     private final int start;
     private final int end;
-    private final int MAX = 50_000;
+    private final int MAX = 1_000;
 
 
     public FJT(int start, int end) {
