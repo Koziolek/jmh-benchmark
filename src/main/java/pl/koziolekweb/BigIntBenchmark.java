@@ -31,10 +31,7 @@
 
 package pl.koziolekweb;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.math.BigInteger;
@@ -48,6 +45,7 @@ import static pl.koziolekweb.Params.*;
 public class BigIntBenchmark {
 
     @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
     @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Fork(LOOP)

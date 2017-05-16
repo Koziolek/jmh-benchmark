@@ -23,8 +23,21 @@ public class LongBenchmark {
     @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
     @Fork(LOOP)
-    public void loopWithSum(Blackhole blackhole) {
+    public void loopWithlongSum(Blackhole blackhole) {
         long sum = 0L;
+
+        for (int i = 0; i < MAX; i++) {
+            sum += i;
+        }
+        blackhole.consume(sum);
+    }
+
+    @Benchmark
+    @Warmup(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = LOOP, time = TIME, timeUnit = TimeUnit.MILLISECONDS)
+    @Fork(LOOP)
+    public void loopWithLongSum(Blackhole blackhole) {
+        Long sum = 0L;
 
         for (int i = 0; i < MAX; i++) {
             sum += i;
